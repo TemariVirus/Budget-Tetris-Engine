@@ -317,7 +317,7 @@ pub fn GameState(comptime BagImpl: type, comptime kicks: KickFn) type {
             }
 
             _ = try writer.write("║");
-            const mask = (Piece{ .facing = .Up, .kind = self.hold_kind.? }).mask();
+            const mask = (Piece{ .facing = .up, .kind = self.hold_kind.? }).mask();
             const y = 2 - i;
             for (0..4) |x| {
                 _ = try writer.write(if (mask.get(x, y)) "██" else "  ");
@@ -356,9 +356,9 @@ pub fn GameState(comptime BagImpl: type, comptime kicks: KickFn) type {
             }
 
             _ = try writer.write("║");
-            var mask = (Piece{ .facing = .Up, .kind = self.next_pieces[next_idx] }).mask();
+            var mask = (Piece{ .facing = .up, .kind = self.next_pieces[next_idx] }).mask();
 
-            const y = @as(usize, if (self.next_pieces[next_idx] == .I) 3 else 2) - next_row;
+            const y = @as(usize, if (self.next_pieces[next_idx] == .i) 3 else 2) - next_row;
             for (0..4) |x| {
                 _ = try writer.write(if (mask.get(x, y)) "██" else "  ");
             }
