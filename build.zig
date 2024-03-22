@@ -8,11 +8,6 @@ const zxaudio2 = @import("zxaudio2");
 pub const Package = struct {
     engine: *Build.Module,
     install_xaudio2: *Build.Step,
-
-    pub fn link(pkg: Package, exe: *Build.Step.Compile) void {
-        exe.root_module.addImport("engine", pkg.engine);
-        exe.step.dependOn(pkg.install_xaudio2);
-    }
 };
 
 pub fn build(b: *Build) void {
