@@ -1,19 +1,14 @@
-const std = @import("std");
-const testing = std.testing;
-
 pub const attack = @import("attack.zig");
 pub const bags = @import("bags.zig");
 pub const bit_masks = @import("bit_masks.zig");
 pub const kicks = @import("kicks.zig");
 pub const pieces = @import("pieces.zig");
-pub const sound = @import("sound.zig");
 
 pub const Match = @import("Match.zig").Match;
-pub const Player = @import("Player.zig").Player;
+pub const Player = @import("player.zig").Player;
 pub const GameState = @import("GameState.zig").GameState;
 pub const PeriodicTrigger = @import("PeriodicTrigger.zig");
 
-// TODO: Load settings to config file
 pub const GameSettings = struct {
     pub const Stat = enum {
         /// Attack Per Line.
@@ -81,5 +76,5 @@ pub const GameSettings = struct {
 };
 
 test {
-    testing.refAllDecls(@This());
+    @import("std").testing.refAllDecls(@This());
 }
