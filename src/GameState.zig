@@ -371,8 +371,8 @@ pub fn GameState(comptime BagImpl: type) type {
 }
 
 test "DT cannon" {
-    var game = GameState(root.bags.SevenBag, root.kicks.srsPlus)
-        .init(root.bags.SevenBag.init(69));
+    var game = GameState(root.bags.SevenBag)
+        .init(root.bags.SevenBag.init(69), root.kicks.srsPlus);
     game.current = Piece{ .facing = .up, .kind = .z };
 
     // J piece
