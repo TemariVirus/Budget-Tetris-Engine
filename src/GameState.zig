@@ -23,8 +23,12 @@ const Facing = pieces.Facing;
 const KickFn = root.kicks.KickFn;
 const Rotation = root.kicks.Rotation;
 
-pub fn GameState(comptime BagImpl: type, comptime kicks: KickFn) type {
+// TODO: Abstract BagImpl type while maintaining full copy semantics (i.e., no allocations)
+pub fn GameState(comptime BagImpl: type) type {
     return struct {
+        const Self = @This();
+        const Bag = root.bags.Bag(BagImpl);
+
         playfield: BoardMask = BoardMask{},
         pos: Position = undefined,
         current: Piece = undefined,
@@ -35,13 +39,12 @@ pub fn GameState(comptime BagImpl: type, comptime kicks: KickFn) type {
         bag: Bag,
         b2b: u32 = 0,
         combo: u32 = 0,
+        kicks: *const KickFn,
 
-        const Self = @This();
-        const Bag = root.bags.Bag(BagImpl);
-
-        pub fn init(bag: BagImpl) Self {
+        pub fn init(bag: BagImpl, kicks: *const KickFn) Self {
             var game = Self{
                 .bag = .{ .context = bag },
+                .kicks = kicks,
             };
             for (&game.next_pieces) |*piece| {
                 piece.* = game.bag.next();
@@ -144,7 +147,7 @@ pub fn GameState(comptime BagImpl: type, comptime kicks: KickFn) type {
                 return 0;
             }
 
-            for (kicks(old_piece, rotation), 1..) |kick, i| {
+            for (self.kicks(old_piece, rotation), 1..) |kick, i| {
                 const kicked_pos = self.pos.add(kick);
                 if (!self.collides(self.current, kicked_pos)) {
                     self.pos = kicked_pos;

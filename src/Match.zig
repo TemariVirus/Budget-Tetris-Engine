@@ -7,17 +7,27 @@ const View = @import("nterm").View;
 const root = @import("root.zig");
 const KickFn = root.kicks.KickFn;
 const Settings = root.GameSettings;
+const SfxFn = root.player.SfxFn;
 
-pub fn Match(comptime BagImpl: type, comptime kicks: KickFn) type {
+pub fn Match(comptime BagImpl: type) type {
     return struct {
         // Players and bots are likely to maintain references to the player objects, so we
         // they must NOT be moved after initialisation.
         players: []Player,
 
         const Self = @This();
-        pub const Player = root.Player(BagImpl, kicks);
+        pub const Player = root.Player(BagImpl);
 
-        pub fn init(allocator: Allocator, player_count: usize, bag: BagImpl, default_settings: Settings) !Self {
+        pub fn init(
+            comptime kicks: KickFn,
+            // TODO: Abstract drawAt using dependency injection
+            // comptime drawAt: fn (x: u16, y: u16, char: u23) void,
+            comptime playSfx: SfxFn,
+            allocator: Allocator,
+            player_count: usize,
+            bag: BagImpl,
+            default_settings: Settings,
+        ) !Self {
             assert(player_count > 0);
 
             const size = optimalSize(player_count);
@@ -28,13 +38,15 @@ pub fn Match(comptime BagImpl: type, comptime kicks: KickFn) type {
                 player.* = Player.init(
                     "",
                     bag,
+                    kicks,
+                    default_settings,
                     View{
                         .left = @intCast(1 + (Player.DISPLAY_W + 1) * col),
                         .top = @intCast((Player.DISPLAY_H + 1) * row),
                         .width = Player.DISPLAY_W,
                         .height = Player.DISPLAY_H,
                     },
-                    default_settings,
+                    playSfx,
                 );
             }
 

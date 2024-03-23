@@ -1,88 +1,37 @@
 const std = @import("std");
-const assert = std.debug.assert;
-const Allocator = std.mem.Allocator;
 
 const nterm = @import("nterm");
-const Animation = nterm.Animation;
-const Color = nterm.Color;
-const Frame = nterm.Frame;
-const Pixel = nterm.Pixel;
 const View = nterm.View;
 
 const root = @import("root.zig");
-const AttackTable = root.attack.AttackTable;
-const BoardMask = root.bit_masks.BoardMask;
 const ClearInfo = root.attack.ClearInfo;
-const TargetMode = root.attack.TargetMode;
-const ColorArray = @import("ColorArray.zig");
 const KickFn = root.kicks.KickFn;
-const PieceKind = root.pieces.PieceKind;
 const Piece = root.pieces.Piece;
 const Settings = root.GameSettings;
-const sound = root.sound;
 const Stat = root.GameSettings.Stat;
 
-const Animations = struct {
-    const TRANSPERENT_PIXEL = Pixel{ .fg = Color.none, .bg = Color.none, .char = 0 };
-    const TRANSPERENT_ROW = [_]Pixel{TRANSPERENT_PIXEL} ** 20;
-    const BLACK_PIXEL = Pixel{ .fg = Color.black, .bg = Color.black, .char = ' ' };
-    const BLACK_ROW = [_]Pixel{BLACK_PIXEL} ** 20;
+const animations = @import("player/animations.zig");
+pub const ColorArray = @import("player/ColorArray.zig");
 
-    const CLEAR_WIDTH = 20;
-    const CLEAR_HEIGHT = 1;
-    const CLEAR_FRAMES = blk: {
-        var frames = [_]Frame{undefined} ** 5;
-        for (0..frames.len) |i| {
-            var pixels = [_]Pixel{TRANSPERENT_PIXEL} ** (2 * (5 - i)) ++ [_]Pixel{BLACK_PIXEL} ** (4 * i) ++ [_]Pixel{TRANSPERENT_PIXEL} ** (2 * (5 - i));
-            frames[i] = .{
-                .size = .{ .width = CLEAR_WIDTH, .height = CLEAR_HEIGHT },
-                .pixels = &pixels,
-            };
-        }
-        break :blk &frames;
-    };
-    pub fn clearTimes(clear_delay: u32) [5]u64 {
-        var times = [_]u64{undefined} ** 5;
-        for (0..times.len - 1) |i| {
-            times[i] = std.time.ns_per_ms / 5 * @as(u64, @intCast(i + 1)) * clear_delay;
-        }
-        times[4] = std.math.maxInt(u64);
-        return times;
-    }
-
-    const DEATH_WIDTH = 20;
-    const DEATH_HEIGHT = 20;
-    const DEATH_FRAMES = blk: {
-        var frames = [_]Frame{undefined} ** 21;
-        for (0..frames.len) |i| {
-            var pixels = TRANSPERENT_ROW ** (frames.len - i - 1) ++ BLACK_ROW ** i;
-            frames[i] = .{
-                .size = .{ .width = DEATH_WIDTH, .height = DEATH_HEIGHT },
-                .pixels = &pixels,
-            };
-        }
-
-        // Add dead face
-        var x = 7;
-        var face = std.unicode.Utf8Iterator{ .bytes = "(x╭╮x)", .i = 0 };
-        while (face.nextCodepoint()) |c| {
-            frames[frames.len - 1].set(x, 7, .{ .fg = Color.white, .bg = Color.black, .char = c });
-            x += 1;
-        }
-
-        break :blk &frames;
-    };
-    const DEATH_TIMES = blk: {
-        var times = [_]u64{undefined} ** 21;
-        for (0..times.len - 1) |i| {
-            times[i] = @as(u64, @intCast(i + 1)) * 100 * std.time.ns_per_ms;
-        }
-        times[times.len - 1] = std.math.maxInt(u64);
-        break :blk &times;
-    };
+pub const SfxFn = fn (sfx: Sfx) void;
+pub const Sfx = enum(u8) {
+    move,
+    rotate,
+    hard_drop,
+    hold,
+    pause,
+    landing,
+    garbage_small,
+    garbage_large,
+    single_clear,
+    double_clear,
+    tetris_clear,
+    triple_clear,
+    t_spin,
+    perfect_clear,
 };
 
-const IncomingGarbage = packed struct {
+pub const IncomingGarbage = packed struct {
     /// The x position of the hole in the garbage.
     hole: u4,
     /// The number of lines of garbage.
@@ -91,12 +40,12 @@ const IncomingGarbage = packed struct {
     time: u44,
 };
 // Use a bounded array to avoid dynamic allocation
-const GarbageQueue = std.BoundedArray(IncomingGarbage, 25);
+pub const GarbageQueue = std.BoundedArray(IncomingGarbage, 25);
 
-pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
+pub fn Player(comptime BagImpl: type) type {
     return struct {
         const Self = @This();
-        pub const GameState = root.GameState(BagImpl, kicks);
+        pub const GameState = root.GameState(BagImpl);
         pub const Bag = root.bags.Bag(BagImpl);
 
         pub const DISPLAY_W = 44;
@@ -173,7 +122,6 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
         last_clear_time: u64 = 0,
         playfield_colors: ColorArray = ColorArray{},
         garbage_queue: GarbageQueue = GarbageQueue{},
-        view: View,
         settings: Settings,
 
         already_held: bool = false,
@@ -184,9 +132,11 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
         soft_dropping: bool = false,
         vel: f32 = 0.0,
 
+        view: View,
         anim_time: u64 = 0,
         clear_anim_start: u64 = 0,
         death_anim_start: u64 = 0,
+        playSfx: *const SfxFn,
 
         /// The number of nanoseconds since the game started. Stops increasing when the
         /// game is paused or the player is dead.
@@ -204,14 +154,17 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
         pub fn init(
             name: []const u8,
             bag: BagImpl,
-            view: View,
+            kicks: *const KickFn,
             settings: Settings,
+            view: View,
+            playSfx: *const SfxFn,
         ) Self {
             return Self{
                 .name = name,
-                .state = GameState.init(bag),
-                .view = view,
+                .state = GameState.init(bag, kicks),
                 .settings = settings,
+                .view = view,
+                .playSfx = playSfx,
             };
         }
 
@@ -239,7 +192,7 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
             self.last_kick = -1;
             self.move_count = 0;
             self.last_move_time = self.time;
-            sound.playSfx(.hold) catch {};
+            self.playSfx(.hold);
         }
 
         pub fn moveLeft(self: *Self, das: bool) void {
@@ -263,7 +216,7 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
                 self.last_move_time = self.time;
             }
 
-            sound.playSfx(.move) catch {};
+            self.playSfx(.move);
         }
 
         /// Assumes that the move was caused by DAS and does not count as an extra keypress.
@@ -281,7 +234,7 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
                 self.last_move_time = self.time;
             }
 
-            sound.playSfx(.move) catch {};
+            self.playSfx(.move);
         }
 
         pub fn moveRight(self: *Self, das: bool) void {
@@ -305,7 +258,7 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
                 self.last_move_time = self.time;
             }
 
-            sound.playSfx(.move) catch {};
+            self.playSfx(.move);
         }
 
         /// Assumes that the move was caused by DAS and does not count as an extra keypress.
@@ -323,7 +276,7 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
                 self.last_move_time = self.time;
             }
 
-            sound.playSfx(.move) catch {};
+            self.playSfx(.move);
         }
 
         pub fn rotateCw(self: *Self) void {
@@ -343,7 +296,7 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
                 self.last_move_time = self.time;
             }
 
-            sound.playSfx(.rotate) catch {};
+            self.playSfx(.rotate);
         }
 
         pub fn rotateDouble(self: *Self) void {
@@ -363,7 +316,7 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
                 self.last_move_time = self.time;
             }
 
-            sound.playSfx(.rotate) catch {};
+            self.playSfx(.rotate);
         }
 
         pub fn rotateCcw(self: *Self) void {
@@ -383,7 +336,7 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
                 self.last_move_time = self.time;
             }
 
-            sound.playSfx(.rotate) catch {};
+            self.playSfx(.rotate);
         }
 
         pub fn softDrop(self: *Self) void {
@@ -404,7 +357,7 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
                 self.last_kick = -1;
             }
 
-            sound.playSfx(.hard_drop) catch {};
+            self.playSfx(.hard_drop);
             self.placeCurrent(self_index, players);
         }
 
@@ -428,17 +381,17 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
             self.vel = 0.0;
 
             if (clear_info.info.pc) {
-                sound.playSfx(.perfect_clear) catch {};
+                self.playSfx(.perfect_clear);
             } else if (clear_info.info.t_spin != .none) {
-                sound.playSfx(.t_spin) catch {};
+                self.playSfx(.t_spin);
             } else if (clear_info.info.cleared > 0) {
-                sound.playSfx(switch (clear_info.info.cleared) {
+                self.playSfx(switch (clear_info.info.cleared) {
                     1 => .single_clear,
                     2 => .double_clear,
                     3 => .triple_clear,
                     4 => .tetris_clear,
                     else => unreachable,
-                }) catch {};
+                });
             }
 
             if (self.state.playfield.collides(self.state.current.mask(), self.state.pos) or // Block out
@@ -707,7 +660,7 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
                     now -| self.last_move_time >= self.settings.lock_delay * std.time.ns_per_ms)
                 {
                     self.placeCurrent(self_index, players);
-                    sound.playSfx(.landing) catch {};
+                    self.playSfx(.landing);
                 }
             }
 
@@ -732,7 +685,14 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
             if (seed) |s| {
                 self.state.bag.setSeed(s);
             }
-            self.* = init(self.name, self.state.bag.context, self.view, self.settings);
+            self.* = init(
+                self.name,
+                self.state.bag.context,
+                self.state.kicks,
+                self.settings,
+                self.view,
+                self.playSfx,
+            );
         }
 
         /// Returns the current level
@@ -899,12 +859,13 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
 
         fn printGlitchyU64(view: View, x: u8, y: u8, value: u64) void {
             if (value < 100_000_000) {
+                // Print in decimal if the value is small enough
                 view.printAt(x, y, .white, .black, "{d}", .{value});
             } else if (value < 0x1_0000_0000) {
-                // Print in hexadecimal if the score is too large
+                // Print in hexadecimal if the value is too large
                 view.printAt(x, y, .white, .black, "{x}", .{value});
             } else {
-                // Map bytes directly to characters if the score is still too large,
+                // Map bytes directly to characters if the value is still too large,
                 // because glitched text is cool
                 var bytes = [_]u16{undefined} ** 8;
                 for (0..8) |i| {
@@ -951,24 +912,22 @@ pub fn Player(comptime BagImpl: type, comptime kicks: KickFn) type {
             if (self.clear_anim_start != 0) {
                 for (0..20) |y| {
                     if (self.playfield_colors.isRowFull(y)) {
-                        _ = (Animation{
-                            .time = self.anim_time - self.clear_anim_start,
-                            .frames = Animations.CLEAR_FRAMES,
-                            .frame_times = &Animations.clearTimes(self.settings.clear_delay),
-                            .view = self.view.sub(12, @intCast(22 - y), Animations.CLEAR_WIDTH, Animations.CLEAR_HEIGHT),
-                        }).forceRender();
+                        _ = animations.clearAnimation(
+                            self.anim_time - self.clear_anim_start,
+                            self.settings.clear_delay,
+                            self.view,
+                            @intCast(y),
+                        ).forceRender();
                     }
                 }
             }
 
             // Death animation
             if (self.death_anim_start != 0) {
-                _ = (Animation{
-                    .time = self.anim_time - self.death_anim_start,
-                    .frames = Animations.DEATH_FRAMES,
-                    .frame_times = Animations.DEATH_TIMES,
-                    .view = matrix_box_inner,
-                }).forceRender();
+                _ = animations.deathAnimation(
+                    self.anim_time - self.death_anim_start,
+                    matrix_box_inner,
+                ).forceRender();
             }
         }
 

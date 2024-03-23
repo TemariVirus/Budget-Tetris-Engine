@@ -6,7 +6,6 @@
 //! This module provides several example implementations.
 
 const std = @import("std");
-const testing = std.testing;
 
 const PieceKind = @import("root.zig").pieces.PieceKind;
 
@@ -15,6 +14,8 @@ pub const FourteenBag = @import("bags/FourteenBag.zig");
 pub const NoBag = @import("bags/NoBag.zig");
 pub const NBag = @import("bags/n_bag.zig").NBag;
 
+/// A thin wrapper around a concrete bag implementation that provides a common
+/// interface.
 pub fn Bag(comptime T: type) type {
     return struct {
         context: T,
@@ -85,5 +86,5 @@ pub const SplitMix64 = struct {
 };
 
 test {
-    testing.refAllDecls(@This());
+    std.testing.refAllDecls(@This());
 }

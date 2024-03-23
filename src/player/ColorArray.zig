@@ -9,7 +9,7 @@ pub const EMPTY_COLOR = Color.black;
 pub const GARBAGE_COLOR = Color.white;
 const EMPTY_BYTE = (@intFromEnum(PackedColor.empty) << 4) | @intFromEnum(PackedColor.empty);
 
-const PackedColor = enum(u8) {
+pub const PackedColor = enum(u8) {
     empty,
     red,
     green,
@@ -28,9 +28,10 @@ const PackedColor = enum(u8) {
     bright_white,
 };
 
+// TODO: change to std.packedIntArraay
 data: [WIDTH * HEIGHT / 2]u8 = [_]u8{EMPTY_BYTE} ** (WIDTH * HEIGHT / 2),
 
-fn pack(color: Color) PackedColor {
+pub fn pack(color: Color) PackedColor {
     return switch (color) {
         .none => unreachable,
         .black => .empty,
@@ -52,7 +53,7 @@ fn pack(color: Color) PackedColor {
     };
 }
 
-fn unpack(color: PackedColor) Color {
+pub fn unpack(color: PackedColor) Color {
     return switch (color) {
         .empty => .black,
         .red => .red,

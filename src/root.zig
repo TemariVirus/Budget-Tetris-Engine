@@ -5,7 +5,8 @@ pub const kicks = @import("kicks.zig");
 pub const pieces = @import("pieces.zig");
 
 pub const Match = @import("Match.zig").Match;
-pub const Player = @import("player.zig").Player;
+pub const player = @import("player.zig");
+pub const Player = player.Player;
 pub const GameState = @import("GameState.zig").GameState;
 pub const PeriodicTrigger = @import("PeriodicTrigger.zig");
 
