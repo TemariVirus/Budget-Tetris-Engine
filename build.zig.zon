@@ -3,8 +3,8 @@
     .version = "0.0.0",
     .dependencies = .{
         .nterm = .{
-            .url = "https://github.com/TemariVirus/nterm/archive/02ac37cb26acdbd142d5628a19bd33e72d8899d2.tar.gz",
-            .hash = "12208dbf94efbe56a652827a3d319b90b894b257225877a3394c40190789e9d9068e",
+            .url = "https://github.com/TemariVirus/nterm/archive/b965b8c0e73da8ce72ad57769ff1276ed0fa3c21.tar.gz",
+            .hash = "122057c130af1fb95106d6ee968795f81a86276389bb3554a72bbf46892d66794b42",
         },
     },
     .paths = .{

@@ -3,7 +3,6 @@ const std = @import("std");
 const nterm = @import("nterm");
 const Animation = nterm.Animation;
 const Color = nterm.Color;
-const Frame = nterm.Frame;
 const Pixel = nterm.Pixel;
 const View = nterm.View;
 
@@ -15,13 +14,11 @@ const BLACK_ROW = [_]Pixel{BLACK_PIXEL} ** 20;
 pub const CLEAR_WIDTH = 20;
 pub const CLEAR_HEIGHT = 1;
 pub const CLEAR_FRAMES = blk: {
-    var frames = [_]Frame{undefined} ** 5;
+    var frames = [_][]const Pixel{undefined} ** 5;
     for (0..frames.len) |i| {
-        var pixels = [_]Pixel{TRANSPERENT_PIXEL} ** (2 * (5 - i)) ++ [_]Pixel{BLACK_PIXEL} ** (4 * i) ++ [_]Pixel{TRANSPERENT_PIXEL} ** (2 * (5 - i));
-        frames[i] = .{
-            .size = .{ .width = CLEAR_WIDTH, .height = CLEAR_HEIGHT },
-            .pixels = &pixels,
-        };
+        frames[i] = &[_]Pixel{TRANSPERENT_PIXEL} ** (2 * (5 - i)) ++
+            [_]Pixel{BLACK_PIXEL} ** (4 * i) ++
+            [_]Pixel{TRANSPERENT_PIXEL} ** (2 * (5 - i));
     }
     break :blk frames;
 };
@@ -39,6 +36,7 @@ pub fn clearAnimation(time: u64, clear_delay: u32, view: View, y: u16) Animation
         .time = time,
         .frames = &CLEAR_FRAMES,
         .frame_times = &clearTimes(clear_delay),
+        .size = .{ .width = CLEAR_WIDTH, .height = CLEAR_HEIGHT },
         .view = view.sub(12, @intCast(22 - y), CLEAR_WIDTH, CLEAR_HEIGHT),
     };
 }
@@ -46,22 +44,23 @@ pub fn clearAnimation(time: u64, clear_delay: u32, view: View, y: u16) Animation
 pub const DEATH_WIDTH = 20;
 pub const DEATH_HEIGHT = 20;
 pub const DEATH_FRAMES = blk: {
-    var frames = [_]Frame{undefined} ** 21;
-    for (0..frames.len) |i| {
-        var pixels = TRANSPERENT_ROW ** (frames.len - i - 1) ++ BLACK_ROW ** i;
-        frames[i] = .{
-            .size = .{ .width = DEATH_WIDTH, .height = DEATH_HEIGHT },
-            .pixels = &pixels,
-        };
+    var frames = [_][]const Pixel{undefined} ** 21;
+    for (0..frames.len - 1) |i| {
+        frames[i] = &TRANSPERENT_ROW ** (frames.len - i - 1) ++ BLACK_ROW ** i;
     }
 
-    // Add dead face
-    var x = 7;
-    var face = std.unicode.Utf8Iterator{ .bytes = "(x╭╮x)", .i = 0 };
-    while (face.nextCodepoint()) |c| {
-        frames[frames.len - 1].set(x, 7, .{ .fg = Color.white, .bg = Color.black, .char = c });
-        x += 1;
-    }
+    const last_frame = blk2: {
+        var pixels = BLACK_ROW ** 20;
+        // Add dead face
+        var x = 7;
+        var face = std.unicode.Utf8Iterator{ .bytes = "(x╭╮x)", .i = 0 };
+        while (face.nextCodepoint()) |c| {
+            pixels[7 * DEATH_WIDTH + x] = .{ .fg = Color.white, .bg = Color.black, .char = c };
+            x += 1;
+        }
+        break :blk2 pixels;
+    };
+    frames[frames.len - 1] = &last_frame;
 
     break :blk frames;
 };
@@ -79,6 +78,7 @@ pub fn deathAnimation(time: u64, view: View) Animation {
         .time = time,
         .frames = &DEATH_FRAMES,
         .frame_times = &DEATH_TIMES,
+        .size = .{ .width = DEATH_WIDTH, .height = DEATH_HEIGHT },
         .view = view.sub(0, 0, DEATH_WIDTH, DEATH_HEIGHT),
     };
 }

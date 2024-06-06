@@ -657,7 +657,7 @@ pub fn Player(comptime BagImpl: type) type {
                 self.vel = 0.0;
 
                 if (self.move_count > self.settings.autolock_grace or
-                    now -| self.last_move_time >= self.settings.lock_delay * std.time.ns_per_ms)
+                    now -| self.last_move_time >= @as(u64, self.settings.lock_delay) * std.time.ns_per_ms)
                 {
                     self.placeCurrent(self_index, players);
                     self.playSfx(.landing);
