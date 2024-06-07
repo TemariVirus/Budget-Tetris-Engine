@@ -84,6 +84,25 @@ pub const BoardMask = struct {
             self.rows[@intCast(pos.y + @as(i8, @intCast(i)))] &= ~shifted;
         }
     }
+
+    /// Clears all filled lines in the playfield.
+    /// Returns the number of lines cleared.
+    pub fn clearLines(self: *BoardMask, y: i8) u3 {
+        var cleared: u3 = 0;
+        var i: usize = @max(0, y);
+        while (i + cleared < self.rows.len) {
+            self.rows[i] = self.rows[i + cleared];
+            if (self.rows[i] == FULL_ROW) {
+                cleared += 1;
+            } else {
+                i += 1;
+            }
+        }
+        while (i < self.rows.len) : (i += 1) {
+            self.rows[i] = EMPTY_ROW;
+        }
+        return cleared;
+    }
 };
 
 /// A 10 x 4 bit mask. Contains 1 bit of 0 padding on the right.

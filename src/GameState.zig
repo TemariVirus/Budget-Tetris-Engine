@@ -154,7 +154,7 @@ pub fn GameState(comptime BagImpl: type) type {
             const t_spin = self.tSpinType(last_kick);
 
             self.playfield.place(self.current.mask(), self.pos);
-            const cleared = self.clearLines();
+            const cleared = self.playfield.clearLines(self.pos.y);
 
             const is_clear = cleared > 0;
             const is_hard_clear = (cleared == 4 or t_spin == .full) and is_clear;
@@ -178,25 +178,6 @@ pub fn GameState(comptime BagImpl: type) type {
                 .pc = is_clear and self.playfield.rows[0] == BoardMask.EMPTY_ROW,
                 .t_spin = t_spin,
             };
-        }
-
-        /// Clears all filled lines in the playfield.
-        /// Returns the number of lines cleared.
-        pub fn clearLines(self: *Self) u3 {
-            var cleared: u3 = 0;
-            var i: usize = @max(0, self.pos.y);
-            while (i + cleared < self.playfield.rows.len) {
-                self.playfield.rows[i] = self.playfield.rows[i + cleared];
-                if (self.playfield.rows[i] == BoardMask.FULL_ROW) {
-                    cleared += 1;
-                } else {
-                    i += 1;
-                }
-            }
-            while (i < self.playfield.rows.len) : (i += 1) {
-                self.playfield.rows[i] = BoardMask.EMPTY_ROW;
-            }
-            return cleared;
         }
 
         const tspin_table = [16][4]TSpin{
