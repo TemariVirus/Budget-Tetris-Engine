@@ -133,21 +133,10 @@ pub fn GameState(comptime BagImpl: type) type {
         /// Tries to rotate the current piece. Returns the index of the kick used. `-1`
         /// indicates that the rotation failed.
         pub fn rotate(self: *Self, rotation: Rotation) i8 {
-            // O piece cannot rotate
-            if (self.current.kind == .o) {
-                return -1;
-            }
-
-            // TODO: Add setting to disable half rotations
             const old_piece = self.current;
-
-            // Implicit (0, 0) kick
             self.current.facing = self.current.facing.rotate(rotation);
-            if (!self.collides(self.current, self.pos)) {
-                return 0;
-            }
 
-            for (self.kicks(old_piece, rotation), 1..) |kick, i| {
+            for (self.kicks(old_piece, rotation), 0..) |kick, i| {
                 const kicked_pos = self.pos.add(kick);
                 if (!self.collides(self.current, kicked_pos)) {
                     self.pos = kicked_pos;

@@ -7,10 +7,13 @@ const Piece = root.pieces.Piece;
 
 pub const KickFn = fn (Piece, Rotation) []const Position;
 
+// TODO: Automatically generate tables from functions and test performance
 pub const none = @import("kicks/none.zig").none;
+pub const none180 = @import("kicks/none180.zig").none180;
 pub const srs = @import("kicks/srs.zig").srs;
-// The srs180 and srsPlus kick tables were taken directly from Tetr.io's source code (https://tetr.io/js/tetrio.js)
 pub const srs180 = @import("kicks/srs180.zig").srs180;
+// The srsTetrio and srsPlus kick tables were taken directly from Tetr.io's source code (https://tetr.io/js/tetrio.js)
+pub const srsTetrio = @import("kicks/srs_tetrio.zig").srsTetrio;
 pub const srsPlus = @import("kicks/srs_plus.zig").srsPlus;
 
 /// Represents a piece rotation.
