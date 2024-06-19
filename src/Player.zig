@@ -750,11 +750,11 @@ pub fn Player(comptime BagImpl: type) type {
         }
 
         /// Draws the game elements to the game's allocated view.
-        pub fn draw(self: Self) !void {
-            try self.drawNameLines();
+        pub fn draw(self: Self) void {
+            self.drawNameLines();
             self.drawHold();
             self.drawScoreLevel();
-            try self.drawClearInfo();
+            self.drawClearInfo();
             self.drawMatrix();
             self.drawGarbageMeter();
             self.drawNext();
@@ -763,9 +763,9 @@ pub fn Player(comptime BagImpl: type) type {
             }
         }
 
-        fn drawNameLines(self: Self) !void {
-            try self.view.printAligned(.center, 0, .white, .black, "{s}", .{self.name});
-            try self.view.printAligned(.center, 1, .white, .black, "LINES - {d}", .{self.lines_cleared});
+        fn drawNameLines(self: Self) void {
+            self.view.printAligned(.center, 0, .white, .black, "{s}", .{self.name});
+            self.view.printAligned(.center, 1, .white, .black, "LINES - {d}", .{self.lines_cleared});
         }
 
         fn drawPiece(view: View, x: i8, y: i8, piece: Piece, solid: bool) void {
@@ -824,7 +824,7 @@ pub fn Player(comptime BagImpl: type) type {
             printGlitchyU64(score_level_box, 1, 4, self.level());
         }
 
-        fn drawClearInfo(self: Self) !void {
+        fn drawClearInfo(self: Self) void {
             const LEFT = 0;
             const TOP = 15;
             const WIDTH = 10;
@@ -850,7 +850,7 @@ pub fn Player(comptime BagImpl: type) type {
                 else => {},
             }
             if (self.state.combo > 1) {
-                try clear_info_box.printAligned(.center, 3, .white, .black, "{d} COMBO!", .{self.state.combo - 1});
+                clear_info_box.printAligned(.center, 3, .white, .black, "{d} COMBO!", .{self.state.combo - 1});
             }
             if (self.last_clear_info.pc) {
                 clear_info_box.writeAligned(.center, 4, .white, .black, "ALL CLEAR!");
