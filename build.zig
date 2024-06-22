@@ -6,7 +6,6 @@ pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    // TODO: remove
     const nterm_module = b.dependency("nterm", .{
         .target = target,
         .optimize = optimize,

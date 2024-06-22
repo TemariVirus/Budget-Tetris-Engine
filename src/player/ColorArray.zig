@@ -7,9 +7,9 @@ pub const WIDTH = 10;
 pub const HEIGHT = 40;
 pub const EMPTY_COLOR = Color.black;
 pub const GARBAGE_COLOR = Color.white;
-const EMPTY_BYTE = (@intFromEnum(PackedColor.empty) << 4) | @intFromEnum(PackedColor.empty);
+const EMPTY_BYTE = (@as(u8, @intFromEnum(PackedColor.empty)) << 4) | @intFromEnum(PackedColor.empty);
 
-pub const PackedColor = enum(u8) {
+pub const PackedColor = enum(u4) {
     empty,
     red,
     green,
@@ -28,7 +28,6 @@ pub const PackedColor = enum(u8) {
     bright_white,
 };
 
-// TODO: change to std.packedIntArraay
 data: [WIDTH * HEIGHT / 2]u8 = [_]u8{EMPTY_BYTE} ** (WIDTH * HEIGHT / 2),
 
 pub fn pack(color: Color) PackedColor {
@@ -89,7 +88,7 @@ pub fn set(self: *Self, x: usize, y: usize, color: Color) void {
     assert(x < WIDTH and y < HEIGHT);
 
     const i = (y * WIDTH + x) / 2;
-    const packed_color = @intFromEnum(pack(color));
+    const packed_color: u8 = @intFromEnum(pack(color));
     if (x % 2 == 0) {
         self.data[i] = (self.data[i] & 0xF0) | packed_color;
     } else {

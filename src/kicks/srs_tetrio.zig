@@ -1,8 +1,9 @@
 const root = @import("../root.zig");
+const kicks = root.kicks;
 const Position = root.pieces.Position;
 const Piece = root.pieces.Piece;
-const Rotation = root.kicks.Rotation;
-const srs = @import("srs.zig").srs;
+const Rotation = kicks.Rotation;
+const srs = kicks.srs;
 
 const no_kicks = [0]Position{};
 
@@ -47,6 +48,11 @@ const double_i_kicks = [1]Position{
 
 /// The modified SRS kicks that Tetr.io uses. Introduces some 180 kicks.
 pub fn srsTetrio(piece: Piece, rotation: Rotation) []const Position {
+    const table = comptime kicks.makeKickTable(srsTetrioRaw);
+    return table[kicks.kickTableIndex(piece, rotation)];
+}
+
+fn srsTetrioRaw(piece: Piece, rotation: Rotation) []const Position {
     if (rotation == .half) {
         return &switch (piece.kind) {
             .i => double_i_kicks,

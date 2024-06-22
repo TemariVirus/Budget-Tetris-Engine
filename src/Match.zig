@@ -11,8 +11,8 @@ const SfxFn = root.player.SfxFn;
 
 pub fn Match(comptime BagImpl: type) type {
     return struct {
-        // Players and bots are likely to maintain references to the player objects, so we
-        // they must NOT be moved after initialisation.
+        // Players and bots are likely to maintain references to the player
+        // objects, sothey must NOT be moved after initialisation.
         players: []Player,
 
         const Self = @This();
@@ -20,8 +20,6 @@ pub fn Match(comptime BagImpl: type) type {
 
         pub fn init(
             comptime kicks: KickFn,
-            // TODO: Abstract drawAt using dependency injection
-            // comptime drawAt: fn (x: u16, y: u16, char: u23) void,
             comptime playSfx: SfxFn,
             allocator: Allocator,
             player_count: usize,

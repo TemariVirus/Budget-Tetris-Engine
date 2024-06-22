@@ -96,189 +96,13 @@ pub const Piece = packed struct {
 
     pub fn mask(self: Piece) PieceMask {
         @setEvalBranchQuota(10_000);
-        // TODO: Check if this is automatically optimised to an array
-        return switch (self.kind) {
-            .i => switch (self.facing) {
-                .up => comptime PieceMask.parse(
-                    \\....
-                    \\####
-                    \\....
-                    \\....
-                ),
-                .right => comptime PieceMask.parse(
-                    \\..#.
-                    \\..#.
-                    \\..#.
-                    \\..#.
-                ),
-                .down => comptime PieceMask.parse(
-                    \\....
-                    \\....
-                    \\####
-                    \\....
-                ),
-                .left => comptime PieceMask.parse(
-                    \\.#..
-                    \\.#..
-                    \\.#..
-                    \\.#..
-                ),
-            },
-            .o => comptime PieceMask.parse(
-                \\....
-                \\.##.
-                \\.##.
-                \\....
-            ),
-            .t => switch (self.facing) {
-                .up => comptime PieceMask.parse(
-                    \\....
-                    \\.#..
-                    \\###.
-                    \\....
-                ),
-                .right => comptime PieceMask.parse(
-                    \\....
-                    \\.#..
-                    \\.##.
-                    \\.#..
-                ),
-                .down => comptime PieceMask.parse(
-                    \\....
-                    \\....
-                    \\###.
-                    \\.#..
-                ),
-                .left => comptime PieceMask.parse(
-                    \\....
-                    \\.#..
-                    \\##..
-                    \\.#..
-                ),
-            },
-            .s => switch (self.facing) {
-                .up => comptime PieceMask.parse(
-                    \\....
-                    \\.##.
-                    \\##..
-                    \\....
-                ),
-                .right => comptime PieceMask.parse(
-                    \\....
-                    \\.#..
-                    \\.##.
-                    \\..#.
-                ),
-                .down => comptime PieceMask.parse(
-                    \\....
-                    \\....
-                    \\.##.
-                    \\##..
-                ),
-                .left => comptime PieceMask.parse(
-                    \\....
-                    \\#...
-                    \\##..
-                    \\.#..
-                ),
-            },
-            .z => switch (self.facing) {
-                .up => comptime PieceMask.parse(
-                    \\....
-                    \\##..
-                    \\.##.
-                    \\....
-                ),
-                .right => comptime PieceMask.parse(
-                    \\....
-                    \\..#.
-                    \\.##.
-                    \\.#..
-                ),
-                .down => comptime PieceMask.parse(
-                    \\....
-                    \\....
-                    \\##..
-                    \\.##.
-                ),
-                .left => comptime PieceMask.parse(
-                    \\....
-                    \\.#..
-                    \\##..
-                    \\#...
-                ),
-            },
-            .j => switch (self.facing) {
-                .up => comptime PieceMask.parse(
-                    \\....
-                    \\#...
-                    \\###.
-                    \\....
-                ),
-                .right => comptime PieceMask.parse(
-                    \\....
-                    \\.##.
-                    \\.#..
-                    \\.#..
-                ),
-                .down => comptime PieceMask.parse(
-                    \\....
-                    \\....
-                    \\###.
-                    \\..#.
-                ),
-                .left => comptime PieceMask.parse(
-                    \\....
-                    \\.#..
-                    \\.#..
-                    \\##..
-                ),
-            },
-            .l => switch (self.facing) {
-                .up => comptime PieceMask.parse(
-                    \\....
-                    \\..#.
-                    \\###.
-                    \\....
-                ),
-                .right => comptime PieceMask.parse(
-                    \\....
-                    \\.#..
-                    \\.#..
-                    \\.##.
-                ),
-                .down => comptime PieceMask.parse(
-                    \\....
-                    \\....
-                    \\###.
-                    \\#...
-                ),
-                .left => comptime PieceMask.parse(
-                    \\....
-                    \\##..
-                    \\.#..
-                    \\.#..
-                ),
-            },
-        };
+        const table = comptime makeAttributeTable(PieceMask, maskRaw);
+        return table[@as(u5, @bitCast(self))];
     }
 
     pub fn canonicalCenter(self: Piece) Position {
-        return switch (self.kind) {
-            .i => switch (self.facing) {
-                .up => .{ .x = 1, .y = 2 },
-                .right => .{ .x = 2, .y = 2 },
-                .down => .{ .x = 2, .y = 1 },
-                .left => .{ .x = 1, .y = 1 },
-            },
-            .o => switch (self.facing) {
-                .up => .{ .x = 1, .y = 1 },
-                .right => .{ .x = 1, .y = 2 },
-                .down => .{ .x = 2, .y = 2 },
-                .left => .{ .x = 2, .y = 1 },
-            },
-            .t, .s, .z, .j, .l => .{ .x = 1, .y = 1 },
-        };
+        const table = comptime makeAttributeTable(Position, canonicalCenterRaw);
+        return table[@as(u5, @bitCast(self))];
     }
 
     pub fn canonicalPosition(self: Piece, pos: Position) struct { x: u4, y: u6 } {
@@ -334,22 +158,190 @@ pub const Piece = packed struct {
         return table[@as(u5, @bitCast(self))];
     }
 
-    fn makeAttributeTable(comptime T: type, comptime attribute: fn (PieceMask) T) [28]T {
+    fn makeAttributeTable(comptime T: type, comptime attribute: fn (Piece) T) [28]T {
         var table: [28]T = undefined;
-        for (0..7) |piece_kind| {
-            for (0..4) |facing| {
+        for (@typeInfo(PieceKind).Enum.fields) |piece_kind| {
+            for (@typeInfo(Facing).Enum.fields) |facing| {
                 const piece = Piece{
-                    .facing = @enumFromInt(facing),
-                    .kind = @enumFromInt(piece_kind),
+                    .facing = @enumFromInt(facing.value),
+                    .kind = @enumFromInt(piece_kind.value),
                 };
-                table[@as(u5, @bitCast(piece))] = attribute(piece.mask());
+                table[@as(u5, @bitCast(piece))] = attribute(piece);
             }
         }
         return table;
     }
 };
 
-fn findLeft(mask: PieceMask) u3 {
+fn maskRaw(piece: Piece) PieceMask {
+    return switch (piece.kind) {
+        .i => switch (piece.facing) {
+            .up => PieceMask.parse(
+                \\....
+                \\####
+                \\....
+                \\....
+            ),
+            .right => PieceMask.parse(
+                \\..#.
+                \\..#.
+                \\..#.
+                \\..#.
+            ),
+            .down => PieceMask.parse(
+                \\....
+                \\....
+                \\####
+                \\....
+            ),
+            .left => PieceMask.parse(
+                \\.#..
+                \\.#..
+                \\.#..
+                \\.#..
+            ),
+        },
+        .o => PieceMask.parse(
+            \\....
+            \\.##.
+            \\.##.
+            \\....
+        ),
+        .t => switch (piece.facing) {
+            .up => PieceMask.parse(
+                \\....
+                \\.#..
+                \\###.
+                \\....
+            ),
+            .right => PieceMask.parse(
+                \\....
+                \\.#..
+                \\.##.
+                \\.#..
+            ),
+            .down => PieceMask.parse(
+                \\....
+                \\....
+                \\###.
+                \\.#..
+            ),
+            .left => PieceMask.parse(
+                \\....
+                \\.#..
+                \\##..
+                \\.#..
+            ),
+        },
+        .s => switch (piece.facing) {
+            .up => PieceMask.parse(
+                \\....
+                \\.##.
+                \\##..
+                \\....
+            ),
+            .right => PieceMask.parse(
+                \\....
+                \\.#..
+                \\.##.
+                \\..#.
+            ),
+            .down => PieceMask.parse(
+                \\....
+                \\....
+                \\.##.
+                \\##..
+            ),
+            .left => PieceMask.parse(
+                \\....
+                \\#...
+                \\##..
+                \\.#..
+            ),
+        },
+        .z => switch (piece.facing) {
+            .up => PieceMask.parse(
+                \\....
+                \\##..
+                \\.##.
+                \\....
+            ),
+            .right => PieceMask.parse(
+                \\....
+                \\..#.
+                \\.##.
+                \\.#..
+            ),
+            .down => PieceMask.parse(
+                \\....
+                \\....
+                \\##..
+                \\.##.
+            ),
+            .left => PieceMask.parse(
+                \\....
+                \\.#..
+                \\##..
+                \\#...
+            ),
+        },
+        .j => switch (piece.facing) {
+            .up => PieceMask.parse(
+                \\....
+                \\#...
+                \\###.
+                \\....
+            ),
+            .right => PieceMask.parse(
+                \\....
+                \\.##.
+                \\.#..
+                \\.#..
+            ),
+            .down => PieceMask.parse(
+                \\....
+                \\....
+                \\###.
+                \\..#.
+            ),
+            .left => PieceMask.parse(
+                \\....
+                \\.#..
+                \\.#..
+                \\##..
+            ),
+        },
+        .l => switch (piece.facing) {
+            .up => PieceMask.parse(
+                \\....
+                \\..#.
+                \\###.
+                \\....
+            ),
+            .right => PieceMask.parse(
+                \\....
+                \\.#..
+                \\.#..
+                \\.##.
+            ),
+            .down => PieceMask.parse(
+                \\....
+                \\....
+                \\###.
+                \\#...
+            ),
+            .left => PieceMask.parse(
+                \\....
+                \\##..
+                \\.#..
+                \\.#..
+            ),
+        },
+    };
+}
+
+fn findLeft(piece: Piece) u3 {
+    const mask = piece.mask();
     var x = 0;
     outer: while (x < 4) : (x += 1) {
         for (0..4) |y| {
@@ -361,7 +353,8 @@ fn findLeft(mask: PieceMask) u3 {
     return x;
 }
 
-fn findRight(mask: PieceMask) u3 {
+fn findRight(piece: Piece) u3 {
+    const mask = piece.mask();
     var right = 3;
     outer: while (right >= 0) : (right -= 1) {
         for (0..4) |y| {
@@ -373,7 +366,8 @@ fn findRight(mask: PieceMask) u3 {
     return right + 1;
 }
 
-fn findTop(mask: PieceMask) u3 {
+fn findTop(piece: Piece) u3 {
+    const mask = piece.mask();
     var y = 3;
     while (y >= 0) : (y -= 1) {
         if (mask.rows[y] != 0) {
@@ -383,7 +377,8 @@ fn findTop(mask: PieceMask) u3 {
     return y + 1;
 }
 
-fn findBottom(mask: PieceMask) u3 {
+fn findBottom(piece: Piece) u3 {
+    const mask = piece.mask();
     var y = 0;
     while (y < 4) : (y += 1) {
         if (mask.rows[y] != 0) {
@@ -393,18 +388,36 @@ fn findBottom(mask: PieceMask) u3 {
     return y;
 }
 
-fn findMinX(mask: PieceMask) i8 {
-    return -@as(i8, @intCast(findLeft(mask)));
+fn findMinX(piece: Piece) i8 {
+    return -@as(i8, @intCast(findLeft(piece)));
 }
 
-fn findMaxX(mask: PieceMask) i8 {
-    return PieceMask.WIDTH - @as(i8, @intCast(findRight(mask)));
+fn findMaxX(piece: Piece) i8 {
+    return PieceMask.WIDTH - @as(i8, @intCast(findRight(piece)));
 }
 
-fn findMinY(mask: PieceMask) i8 {
-    return -@as(i8, @intCast(findBottom(mask)));
+fn findMinY(piece: Piece) i8 {
+    return -@as(i8, @intCast(findBottom(piece)));
 }
 
-fn findMaxY(mask: PieceMask) i8 {
-    return BoardMask.HEIGHT - @as(i8, @intCast(findTop(mask)));
+fn findMaxY(piece: Piece) i8 {
+    return BoardMask.HEIGHT - @as(i8, @intCast(findTop(piece)));
+}
+
+fn canonicalCenterRaw(piece: Piece) Position {
+    return switch (piece.kind) {
+        .i => switch (piece.facing) {
+            .up => .{ .x = 1, .y = 2 },
+            .right => .{ .x = 2, .y = 2 },
+            .down => .{ .x = 2, .y = 1 },
+            .left => .{ .x = 1, .y = 1 },
+        },
+        .o => switch (piece.facing) {
+            .up => .{ .x = 1, .y = 1 },
+            .right => .{ .x = 1, .y = 2 },
+            .down => .{ .x = 2, .y = 2 },
+            .left => .{ .x = 2, .y = 1 },
+        },
+        .t, .s, .z, .j, .l => .{ .x = 1, .y = 1 },
+    };
 }
