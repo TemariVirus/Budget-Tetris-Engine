@@ -90,9 +90,9 @@ pub fn Match(comptime BagImpl: type) type {
             }
         }
 
-        pub fn draw(self: Self) !void {
+        pub fn draw(self: Self) void {
             for (self.players) |player| {
-                try player.draw();
+                player.draw();
             }
         }
     };
