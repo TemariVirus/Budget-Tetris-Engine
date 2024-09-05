@@ -1,12 +1,15 @@
 const assert = @import("std").debug.assert;
-const Color = @import("nterm").Color;
+
+const nterm = @import("nterm");
+const Color = nterm.Color;
+const Colors = nterm.Colors;
 
 const Self = @This();
 
 pub const WIDTH = 10;
 pub const HEIGHT = 40;
-pub const EMPTY_COLOR = Color.black;
-pub const GARBAGE_COLOR = Color.white;
+pub const EMPTY_COLOR = Colors.BLACK;
+pub const GARBAGE_COLOR = Colors.WHITE;
 const EMPTY_BYTE = (@as(u8, @intFromEnum(PackedColor.empty)) << 4) | @intFromEnum(PackedColor.empty);
 
 pub const PackedColor = enum(u4) {
@@ -30,50 +33,53 @@ pub const PackedColor = enum(u4) {
 
 data: [WIDTH * HEIGHT / 2]u8 = [_]u8{EMPTY_BYTE} ** (WIDTH * HEIGHT / 2),
 
-pub fn pack(color: Color) PackedColor {
+pub fn pack(color: ?Color) PackedColor {
+    if (color) |c| {
+        return switch (c) {
+            Colors.BLACK => .empty,
+            Colors.RED => .red,
+            Colors.GREEN => .green,
+            Colors.YELLOW => .yellow,
+            Colors.BLUE => .blue,
+            Colors.MAGENTA => .magenta,
+            Colors.CYAN => .cyan,
+            Colors.WHITE => .garbage,
+            Colors.BRIGHT_BLACK => .bright_black,
+            Colors.BRIGHT_RED => .bright_red,
+            Colors.BRIGHT_GREEN => .bright_green,
+            Colors.BRIGHT_YELLOW => .bright_yellow,
+            Colors.BRIGHT_BLUE => .bright_blue,
+            Colors.BRIGHT_MAGENTA => .bright_magenta,
+            Colors.BRIGHT_CYAN => .bright_cyan,
+            Colors.BRIGHT_WHITE => .bright_white,
+            else => unreachable,
+        };
+    }
+    return .empty;
+}
+
+pub fn unpack(color: PackedColor) ?Color {
     return switch (color) {
-        .none => unreachable,
-        .black => .empty,
-        .red => .red,
-        .green => .green,
-        .yellow => .yellow,
-        .blue => .blue,
-        .magenta => .magenta,
-        .cyan => .cyan,
-        .white => .garbage,
-        .bright_black => .bright_black,
-        .bright_red => .bright_red,
-        .bright_green => .bright_green,
-        .bright_yellow => .bright_yellow,
-        .bright_blue => .bright_blue,
-        .bright_magenta => .bright_magenta,
-        .bright_cyan => .bright_cyan,
-        .bright_white => .bright_white,
+        .empty => null,
+        .red => Colors.RED,
+        .green => Colors.GREEN,
+        .yellow => Colors.YELLOW,
+        .blue => Colors.BLUE,
+        .magenta => Colors.MAGENTA,
+        .cyan => Colors.CYAN,
+        .garbage => Colors.WHITE,
+        .bright_black => Colors.BRIGHT_BLACK,
+        .bright_red => Colors.BRIGHT_RED,
+        .bright_green => Colors.BRIGHT_GREEN,
+        .bright_yellow => Colors.BRIGHT_YELLOW,
+        .bright_blue => Colors.BRIGHT_BLUE,
+        .bright_magenta => Colors.BRIGHT_MAGENTA,
+        .bright_cyan => Colors.BRIGHT_CYAN,
+        .bright_white => Colors.BRIGHT_WHITE,
     };
 }
 
-pub fn unpack(color: PackedColor) Color {
-    return switch (color) {
-        .empty => .black,
-        .red => .red,
-        .green => .green,
-        .yellow => .yellow,
-        .blue => .blue,
-        .magenta => .magenta,
-        .cyan => .cyan,
-        .garbage => .white,
-        .bright_black => .bright_black,
-        .bright_red => .bright_red,
-        .bright_green => .bright_green,
-        .bright_yellow => .bright_yellow,
-        .bright_blue => .bright_blue,
-        .bright_magenta => .bright_magenta,
-        .bright_cyan => .bright_cyan,
-        .bright_white => .bright_white,
-    };
-}
-
-pub fn get(self: Self, x: usize, y: usize) Color {
+pub fn get(self: Self, x: usize, y: usize) ?Color {
     assert(x < WIDTH and y < HEIGHT);
 
     const i = (y * WIDTH + x) / 2;
@@ -84,7 +90,7 @@ pub fn get(self: Self, x: usize, y: usize) Color {
     return unpack(@enumFromInt(color));
 }
 
-pub fn set(self: *Self, x: usize, y: usize, color: Color) void {
+pub fn set(self: *Self, x: usize, y: usize, color: ?Color) void {
     assert(x < WIDTH and y < HEIGHT);
 
     const i = (y * WIDTH + x) / 2;

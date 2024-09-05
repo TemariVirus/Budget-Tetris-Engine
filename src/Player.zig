@@ -1,6 +1,7 @@
 const std = @import("std");
 
 const nterm = @import("nterm");
+const Colors = nterm.Colors;
 const View = nterm.View;
 
 const root = @import("root.zig");
@@ -764,8 +765,8 @@ pub fn Player(comptime BagImpl: type) type {
         }
 
         fn drawNameLines(self: Self) void {
-            self.view.printAligned(.center, 0, .white, .black, "{s}", .{self.name});
-            self.view.printAligned(.center, 1, .white, .black, "LINES - {d}", .{self.lines_cleared});
+            self.view.printAligned(.center, 0, Colors.WHITE, null, "{s}", .{self.name});
+            self.view.printAligned(.center, 1, Colors.WHITE, null, "LINES - {d}", .{self.lines_cleared});
         }
 
         fn drawPiece(view: View, x: i8, y: i8, piece: Piece, solid: bool) void {
@@ -783,9 +784,9 @@ pub fn Player(comptime BagImpl: type) type {
                     }
 
                     if (solid) {
-                        _ = view.writeText(@intCast(x2), @intCast(y2), .black, color, "  ");
+                        _ = view.writeText(@intCast(x2), @intCast(y2), 0, color, "  ");
                     } else {
-                        _ = view.writeText(@intCast(x2), @intCast(y2), color, .black, "▒▒");
+                        _ = view.writeText(@intCast(x2), @intCast(y2), color, null, "▒▒");
                     }
                 }
             }
@@ -798,8 +799,8 @@ pub fn Player(comptime BagImpl: type) type {
             const HEIGHT = 5;
 
             const hold_box = self.view.sub(LEFT, TOP, WIDTH, HEIGHT);
-            hold_box.drawBox(0, 0, WIDTH, HEIGHT);
-            _ = hold_box.writeText(3, 0, .white, .black, "HOLD");
+            hold_box.drawBox(0, 0, WIDTH, HEIGHT, Colors.WHITE, null);
+            _ = hold_box.writeText(3, 0, Colors.WHITE, null, "HOLD");
             if (self.state.hold_kind) |hold_kind| {
                 const hold_piece = Piece{
                     .facing = .up,
@@ -817,10 +818,10 @@ pub fn Player(comptime BagImpl: type) type {
             const HEIGHT = 6;
 
             const score_level_box = self.view.sub(LEFT, TOP, WIDTH, HEIGHT);
-            score_level_box.drawBox(0, 0, WIDTH, HEIGHT);
-            _ = score_level_box.writeText(1, 1, .white, .black, "SCORE");
+            score_level_box.drawBox(0, 0, WIDTH, HEIGHT, Colors.WHITE, null);
+            _ = score_level_box.writeText(1, 1, Colors.WHITE, null, "SCORE");
             printGlitchyU64(score_level_box, 1, 2, self.score);
-            _ = score_level_box.writeText(1, 3, .white, .black, "LEVEL");
+            _ = score_level_box.writeText(1, 3, Colors.WHITE, null, "LEVEL");
             printGlitchyU64(score_level_box, 1, 4, self.level());
         }
 
@@ -835,35 +836,35 @@ pub fn Player(comptime BagImpl: type) type {
 
             const clear_info_box = self.view.sub(LEFT, TOP, WIDTH, HEIGHT);
             if (self.last_clear_info.b2b) {
-                clear_info_box.writeAligned(.center, 0, .white, .black, "B2B");
+                clear_info_box.writeAligned(.center, 0, Colors.WHITE, null, "B2B");
             }
             switch (self.last_clear_info.t_spin) {
                 .none => {},
-                .mini => clear_info_box.writeAligned(.center, 1, .white, .black, "T-SPIN MINI"),
-                .full => clear_info_box.writeAligned(.center, 1, .white, .black, "T-SPIN"),
+                .mini => clear_info_box.writeAligned(.center, 1, Colors.WHITE, null, "T-SPIN MINI"),
+                .full => clear_info_box.writeAligned(.center, 1, Colors.WHITE, null, "T-SPIN"),
             }
             switch (self.last_clear_info.cleared) {
-                1 => clear_info_box.writeAligned(.center, 2, .white, .black, "SINGLE"),
-                2 => clear_info_box.writeAligned(.center, 2, .white, .black, "DOUBLE"),
-                3 => clear_info_box.writeAligned(.center, 2, .white, .black, "TRIPLE"),
-                4 => clear_info_box.writeAligned(.center, 2, .white, .black, "TETRIS"),
+                1 => clear_info_box.writeAligned(.center, 2, Colors.WHITE, null, "SINGLE"),
+                2 => clear_info_box.writeAligned(.center, 2, Colors.WHITE, null, "DOUBLE"),
+                3 => clear_info_box.writeAligned(.center, 2, Colors.WHITE, null, "TRIPLE"),
+                4 => clear_info_box.writeAligned(.center, 2, Colors.WHITE, null, "TETRIS"),
                 else => {},
             }
             if (self.state.combo > 1) {
-                clear_info_box.printAligned(.center, 3, .white, .black, "{d} COMBO!", .{self.state.combo - 1});
+                clear_info_box.printAligned(.center, 3, Colors.WHITE, null, "{d} COMBO!", .{self.state.combo - 1});
             }
             if (self.last_clear_info.pc) {
-                clear_info_box.writeAligned(.center, 4, .white, .black, "ALL CLEAR!");
+                clear_info_box.writeAligned(.center, 4, Colors.WHITE, null, "ALL CLEAR!");
             }
         }
 
         fn printGlitchyU64(view: View, x: u8, y: u8, value: u64) void {
             if (value < 100_000_000) {
                 // Print in decimal if the value is small enough
-                view.printAt(x, y, .white, .black, "{d}", .{value});
+                view.printAt(x, y, Colors.WHITE, null, "{d}", .{value});
             } else if (value < 0x1_0000_0000) {
                 // Print in hexadecimal if the value is too large
-                view.printAt(x, y, .white, .black, "{x}", .{value});
+                view.printAt(x, y, Colors.WHITE, null, "{x}", .{value});
             } else {
                 // Map bytes directly to characters if the value is still too large,
                 // because glitched text is cool
@@ -877,7 +878,7 @@ pub fn Player(comptime BagImpl: type) type {
                         @as(u16, byte) + 66;
                 }
                 const start = @clz(value) / 8;
-                view.printAt(x, y, .white, .black, "{s}", .{std.unicode.fmtUtf16le(bytes[start..8])});
+                view.printAt(x, y, Colors.WHITE, null, "{s}", .{std.unicode.fmtUtf16le(bytes[start..8])});
             }
         }
 
@@ -889,11 +890,11 @@ pub fn Player(comptime BagImpl: type) type {
 
             const matrix_box = self.view.sub(LEFT, TOP, WIDTH, HEIGHT);
             const matrix_box_inner = matrix_box.sub(1, 1, WIDTH - 2, HEIGHT - 2);
-            matrix_box.drawBox(0, 0, WIDTH, HEIGHT);
+            matrix_box.drawBox(0, 0, WIDTH, HEIGHT, Colors.WHITE, null);
             for (0..20) |y| {
                 for (0..10) |x| {
                     const color = self.playfield_colors.get(x, y);
-                    _ = matrix_box_inner.writeText(@intCast(x * 2), @intCast(19 - y), .black, color, "  ");
+                    _ = matrix_box_inner.writeText(@intCast(x * 2), @intCast(19 - y), 0, color, "  ");
                 }
             }
 
@@ -945,8 +946,8 @@ pub fn Player(comptime BagImpl: type) type {
                     _ = view.writeText(
                         0,
                         y,
-                        .black,
-                        if (@as(u64, garbage.time) * std.time.ns_per_ms <= self.time) .red else .white,
+                        0,
+                        if (@as(u64, garbage.time) * std.time.ns_per_ms <= self.time) Colors.RED else Colors.WHITE,
                         "  ",
                     );
 
@@ -969,8 +970,8 @@ pub fn Player(comptime BagImpl: type) type {
 
             const height = @as(u16, @intCast(self.settings.show_next_count)) * 3 + 1;
             const next_box = self.view.sub(LEFT, TOP, WIDTH, height);
-            next_box.drawBox(0, 0, WIDTH, height);
-            _ = next_box.writeText(3, 0, .white, .black, "NEXT");
+            next_box.drawBox(0, 0, WIDTH, height, Colors.WHITE, null);
+            _ = next_box.writeText(3, 0, Colors.WHITE, null, "NEXT");
 
             for (0..self.settings.show_next_count) |i| {
                 const piece = Piece{
@@ -991,20 +992,20 @@ pub fn Player(comptime BagImpl: type) type {
 
             const view = self.view.sub(0, top, 10, 1);
             switch (stat) {
-                .apl => view.printAt(0, 0, .white, .black, "APL: {d:.3}", .{self.apl()}),
-                .apm => view.printAt(0, 0, .white, .black, "APM: {d:.3}", .{self.apm()}),
-                .app => view.printAt(0, 0, .white, .black, "APP: {d:.3}", .{self.app()}),
-                .finesse => view.printAt(0, 0, .white, .black, "FIN: {d}", .{self.finesse}),
-                .keys => view.printAt(0, 0, .white, .black, "KEYS: {d}", .{self.keys_pressed + self.current_piece_keys}),
-                .kpp => view.printAt(0, 0, .white, .black, "KPP: {d:.3}", .{self.kpp()}),
-                .level => view.printAt(0, 0, .white, .black, "LEVEL: {d}", .{self.level()}),
-                .lines => view.printAt(0, 0, .white, .black, "LINES: {d}", .{self.lines_cleared}),
-                .pps => view.printAt(0, 0, .white, .black, "PPS: {d:.3}", .{self.pps()}),
-                .received => view.printAt(0, 0, .white, .black, "REC: {d}", .{self.lines_received}),
-                .score => view.printAt(0, 0, .white, .black, "SCORE: {d}", .{self.score}),
-                .sent => view.printAt(0, 0, .white, .black, "SENT: {d}", .{self.lines_sent}),
-                .time => view.printAt(0, 0, .white, .black, "TIME: {}", .{std.fmt.fmtDuration(self.time)}),
-                .vs_score => view.printAt(0, 0, .white, .black, "VS: {d:.4}", .{self.vsScore()}),
+                .apl => view.printAt(0, 0, Colors.WHITE, null, "APL: {d:.3}", .{self.apl()}),
+                .apm => view.printAt(0, 0, Colors.WHITE, null, "APM: {d:.3}", .{self.apm()}),
+                .app => view.printAt(0, 0, Colors.WHITE, null, "APP: {d:.3}", .{self.app()}),
+                .finesse => view.printAt(0, 0, Colors.WHITE, null, "FIN: {d}", .{self.finesse}),
+                .keys => view.printAt(0, 0, Colors.WHITE, null, "KEYS: {d}", .{self.keys_pressed + self.current_piece_keys}),
+                .kpp => view.printAt(0, 0, Colors.WHITE, null, "KPP: {d:.3}", .{self.kpp()}),
+                .level => view.printAt(0, 0, Colors.WHITE, null, "LEVEL: {d}", .{self.level()}),
+                .lines => view.printAt(0, 0, Colors.WHITE, null, "LINES: {d}", .{self.lines_cleared}),
+                .pps => view.printAt(0, 0, Colors.WHITE, null, "PPS: {d:.3}", .{self.pps()}),
+                .received => view.printAt(0, 0, Colors.WHITE, null, "REC: {d}", .{self.lines_received}),
+                .score => view.printAt(0, 0, Colors.WHITE, null, "SCORE: {d}", .{self.score}),
+                .sent => view.printAt(0, 0, Colors.WHITE, null, "SENT: {d}", .{self.lines_sent}),
+                .time => view.printAt(0, 0, Colors.WHITE, null, "TIME: {}", .{std.fmt.fmtDuration(self.time)}),
+                .vs_score => view.printAt(0, 0, Colors.WHITE, null, "VS: {d:.4}", .{self.vsScore()}),
             }
         }
     };

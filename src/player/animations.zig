@@ -3,12 +3,13 @@ const std = @import("std");
 const nterm = @import("nterm");
 const Animation = nterm.Animation;
 const Color = nterm.Color;
+const Colors = nterm.Colors;
 const Pixel = nterm.Pixel;
 const View = nterm.View;
 
-const TRANSPERENT_PIXEL = Pixel{ .fg = Color.none, .bg = Color.none, .char = 0 };
+const TRANSPERENT_PIXEL = Pixel{ .fg = null, .bg = null, .char = 0 };
 const TRANSPERENT_ROW = [_]Pixel{TRANSPERENT_PIXEL} ** 20;
-const BLACK_PIXEL = Pixel{ .fg = Color.black, .bg = Color.black, .char = ' ' };
+const BLACK_PIXEL = Pixel{ .fg = 0, .bg = Colors.BLACK, .char = ' ' };
 const BLACK_ROW = [_]Pixel{BLACK_PIXEL} ** 20;
 
 pub const CLEAR_WIDTH = 20;
@@ -55,7 +56,7 @@ pub const DEATH_FRAMES = blk: {
         var x = 7;
         var face = std.unicode.Utf8Iterator{ .bytes = "(x╭╮x)", .i = 0 };
         while (face.nextCodepoint()) |c| {
-            pixels[7 * DEATH_WIDTH + x] = .{ .fg = Color.white, .bg = Color.black, .char = c };
+            pixels[7 * DEATH_WIDTH + x] = .{ .fg = Colors.WHITE, .bg = Colors.BLACK, .char = c };
             x += 1;
         }
         break :blk2 pixels;

@@ -1,7 +1,9 @@
 const std = @import("std");
 const tokenizeScalar = std.mem.tokenizeScalar;
 
-const Color = @import("nterm").Color;
+const nterm = @import("nterm");
+const Color = nterm.Color;
+const Colors = nterm.Colors;
 
 const root = @import("root.zig");
 const BoardMask = root.bit_masks.BoardMask;
@@ -79,13 +81,13 @@ pub const PieceKind = enum(u3) {
 
     pub fn color(self: PieceKind) Color {
         return switch (self) {
-            .i => .bright_cyan,
-            .o => .bright_yellow,
-            .t => .bright_magenta,
-            .s => .bright_green,
-            .z => .red,
-            .l => .yellow,
-            .j => .blue,
+            .i => Colors.BRIGHT_CYAN,
+            .o => Colors.BRIGHT_YELLOW,
+            .t => Colors.BRIGHT_MAGENTA,
+            .s => Colors.BRIGHT_GREEN,
+            .z => Colors.RED,
+            .l => Colors.YELLOW,
+            .j => Colors.BLUE,
         };
     }
 };
