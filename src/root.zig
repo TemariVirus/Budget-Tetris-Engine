@@ -4,11 +4,11 @@ pub const bit_masks = @import("bit_masks.zig");
 pub const kicks = @import("kicks.zig");
 pub const pieces = @import("pieces.zig");
 
+pub const GameState = @import("GameState.zig").GameState;
 pub const Match = @import("Match.zig").Match;
 pub const player = @import("Player.zig");
 pub const Player = player.Player;
-pub const GameState = @import("GameState.zig").GameState;
-pub const PeriodicTrigger = @import("PeriodicTrigger.zig");
+pub const FPSQueue = @import("FPSQueue.zig");
 
 pub const GameSettings = struct {
     pub const Stat = enum {
