@@ -19,7 +19,7 @@ pub const BoardMask = struct {
     rows: [HEIGHT]u16 = [_]u16{EMPTY_ROW} ** HEIGHT,
 
     /// Returns true if the bit at (x, y) is set; otherwise, false.
-    /// Panics if (x, y) is out of bounds.
+    /// Asserts that (x, y) is within bounds.
     pub fn get(self: BoardMask, x: usize, y: usize) bool {
         assert(x < WIDTH);
         assert(y < HEIGHT);
@@ -83,6 +83,17 @@ pub const BoardMask = struct {
                 row >> @intCast(pos.x);
             self.rows[@intCast(pos.y + @as(i8, @intCast(i)))] &= ~shifted;
         }
+    }
+
+    /// Returns the y-coordinate of highest set cell + 1, or 0 if empty.
+    pub fn height(self: BoardMask) u6 {
+        var h: u6 = HEIGHT;
+        while (h >= 1) : (h -= 1) {
+            if (self.rows[h - 1] != EMPTY_ROW) {
+                break;
+            }
+        }
+        return h;
     }
 
     /// Clears all filled lines in the playfield.
