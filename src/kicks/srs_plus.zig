@@ -3,7 +3,7 @@ const kicks = root.kicks;
 const Position = root.pieces.Position;
 const Piece = root.pieces.Piece;
 const Rotation = kicks.Rotation;
-const srsTetrio = kicks.srsTetrio;
+const srsTetrio = @import("srs_tetrio.zig").srsTetrioRaw;
 
 const cw_i_kicks = [4][5]Position{
     [5]Position{
@@ -87,12 +87,9 @@ const ccw_i_kicks = [4][5]Position{
 };
 
 /// Tetr.io's SRS+ kicks. Modifies the I kicks from `srsTetrio`.
-pub fn srsPlus(piece: Piece, rotation: Rotation) []const Position {
-    const table = comptime kicks.makeKickTable(srsPlusRaw);
-    return table[kicks.kickTableIndex(piece, rotation)];
-}
+pub const srsPlus = kicks.tabulariseKicks(srsPlusRaw);
 
-fn srsPlusRaw(piece: Piece, rotation: Rotation) []const Position {
+pub fn srsPlusRaw(piece: Piece, rotation: Rotation) []const Position {
     if (piece.kind == .i) {
         return &switch (rotation) {
             .quarter_cw => cw_i_kicks[@intFromEnum(piece.facing)],

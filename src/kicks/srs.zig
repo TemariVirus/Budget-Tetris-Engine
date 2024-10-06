@@ -131,10 +131,7 @@ const ccw_i_kicks = [4][5]Position{
 };
 
 /// Classic SRS kicks. No 180 rotations.
-pub fn srs(piece: Piece, rotation: Rotation) []const Position {
-    const table = comptime kicks.makeKickTable(srsRaw);
-    return table[kicks.kickTableIndex(piece, rotation)];
-}
+pub const srs = kicks.tabulariseKicks(srsRaw);
 
 pub fn srsRaw(piece: Piece, rotation: Rotation) []const Position {
     return &switch (rotation) {

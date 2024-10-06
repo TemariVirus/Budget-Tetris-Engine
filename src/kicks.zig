@@ -1,5 +1,10 @@
-//! Functions encoding various kick tables.
-//! The (0, 0) kick is always implied as the first kick, and thus is not returned.
+//! A kick function returns the possible kicks (x and y offsets) for a
+//! particular piece and rotation, in order. The first kick that results in a
+//! valid position is used. The (0, 0) kick is not implied and must be
+//! explicitly returned, if it exists.
+
+const std = @import("std");
+const assert = std.debug.assert;
 
 const root = @import("root.zig");
 const Facing = root.pieces.Facing;
@@ -30,19 +35,19 @@ pub const Rotation = enum {
 pub const KICK_TABLE_SIZE = @typeInfo(PieceKind).Enum.fields.len *
     @typeInfo(Facing).Enum.fields.len *
     @typeInfo(Rotation).Enum.fields.len;
+
 pub fn makeKickTable(kickFn: KickFn) [KICK_TABLE_SIZE][]const Position {
     @setEvalBranchQuota(10_000);
-
     var table: [KICK_TABLE_SIZE][]const Position = undefined;
-    for (@typeInfo(PieceKind).Enum.fields) |piece_kind| {
-        for (@typeInfo(Facing).Enum.fields) |facing| {
-            for (@typeInfo(Rotation).Enum.fields) |rotation| {
+    for (std.enums.values(PieceKind)) |piece_kind| {
+        for (std.enums.values(Facing)) |facing| {
+            for (std.enums.values(Rotation)) |rotation| {
                 const piece = Piece{
-                    .facing = @enumFromInt(facing.value),
-                    .kind = @enumFromInt(piece_kind.value),
+                    .facing = facing,
+                    .kind = piece_kind,
                 };
-                const i = kickTableIndex(piece, @enumFromInt(rotation.value));
-                table[i] = kickFn(piece, @enumFromInt(rotation.value));
+                const i = kickTableIndex(piece, rotation);
+                table[i] = kickFn(piece, rotation);
             }
         }
     }
@@ -50,9 +55,23 @@ pub fn makeKickTable(kickFn: KickFn) [KICK_TABLE_SIZE][]const Position {
 }
 
 pub fn kickTableIndex(piece: Piece, rotation: Rotation) u7 {
-    return @intCast(@as(u7, @as(u5, @bitCast(piece))) *
-        @typeInfo(Rotation).Enum.fields.len +
-        @intFromEnum(rotation));
+    const p: u7 = @intFromEnum(piece.kind);
+    const f: u7 = @intFromEnum(piece.facing);
+    const r: u7 = @intFromEnum(rotation);
+    return @intCast((p *
+        @typeInfo(Facing).Enum.fields.len + f) *
+        @typeInfo(Rotation).Enum.fields.len + r);
+}
+
+/// Returns a new kick function that uses a table to look up the kicks. May
+/// give better performance.
+pub fn tabulariseKicks(kickFn: KickFn) KickFn {
+    return (struct {
+        const table = makeKickTable(kickFn);
+        pub fn getKicks(piece: Piece, rotation: Rotation) []const Position {
+            return table[kickTableIndex(piece, rotation)];
+        }
+    }).getKicks;
 }
 
 test {
