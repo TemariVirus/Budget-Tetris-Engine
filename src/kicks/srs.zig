@@ -4,6 +4,9 @@ const Position = root.pieces.Position;
 const Piece = root.pieces.Piece;
 const Rotation = kicks.Rotation;
 
+/// Classic SRS kicks. No 180 rotations.
+pub const srs = kicks.makeKickTable(srsFn);
+
 const no_kicks = [0]Position{};
 
 const cw_kicks = [4][5]Position{
@@ -130,10 +133,7 @@ const ccw_i_kicks = [4][5]Position{
     },
 };
 
-/// Classic SRS kicks. No 180 rotations.
-pub const srs = kicks.tabulariseKicks(srsRaw);
-
-pub fn srsRaw(piece: Piece, rotation: Rotation) []const Position {
+pub fn srsFn(piece: Piece, rotation: Rotation) []const Position {
     return &switch (rotation) {
         .quarter_cw => switch (piece.kind) {
             .i => cw_i_kicks[@intFromEnum(piece.facing)],

@@ -20,8 +20,9 @@ const PieceKind = pieces.PieceKind;
 const Position = pieces.Position;
 const Facing = pieces.Facing;
 
-const KickFn = root.kicks.KickFn;
+const KickTable = root.kicks.KickTable;
 const Rotation = root.kicks.Rotation;
+const getKicks = root.kicks.getKicks;
 
 // TODO: Abstract BagImpl type while maintaining full copy semantics (i.e., no allocations)
 pub fn GameState(comptime BagImpl: type) type {
@@ -39,9 +40,9 @@ pub fn GameState(comptime BagImpl: type) type {
         bag: Bag,
         b2b: u32 = 0,
         combo: u32 = 0,
-        kicks: *const KickFn,
+        kicks: *const KickTable,
 
-        pub fn init(bag: BagImpl, kicks: *const KickFn) Self {
+        pub fn init(bag: BagImpl, kicks: *const KickTable) Self {
             var game = Self{
                 .bag = .{ .context = bag },
                 .kicks = kicks,
@@ -136,7 +137,7 @@ pub fn GameState(comptime BagImpl: type) type {
             const old_piece = self.current;
             self.current.facing = self.current.facing.rotate(rotation);
 
-            for (self.kicks(old_piece, rotation), 0..) |kick, i| {
+            for (getKicks(self.kicks, old_piece, rotation), 0..) |kick, i| {
                 const kicked_pos = self.pos.add(kick);
                 if (!self.collides(self.current, kicked_pos)) {
                     self.pos = kicked_pos;
@@ -342,7 +343,7 @@ pub fn GameState(comptime BagImpl: type) type {
 
 test "DT cannon" {
     var game = GameState(root.bags.SevenBag)
-        .init(root.bags.SevenBag.init(69), root.kicks.srsPlus);
+        .init(root.bags.SevenBag.init(69), &root.kicks.srsPlus);
     game.current = Piece{ .facing = .up, .kind = .z };
 
     // J piece
