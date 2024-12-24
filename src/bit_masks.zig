@@ -3,6 +3,7 @@ const math = std.math;
 const assert = std.debug.assert;
 const tokenizeScalar = std.mem.tokenizeScalar;
 
+const Piece = @import("pieces.zig").Piece;
 const Position = @import("pieces.zig").Position;
 
 /// A 10 x 40 bit mask. Contains 5 bits of 1 padding at the left end,
@@ -40,16 +41,13 @@ pub const BoardMask = struct {
         }
     }
 
-    pub fn collides(self: BoardMask, piece: PieceMask, pos: Position) bool {
-        const start = @max(0, -pos.y);
+    pub fn collides(self: BoardMask, piece: Piece, pos: Position) bool {
         // Check if piece is inside ground
-        for (0..start) |i| {
-            if (piece.rows[i] != 0) {
-                return true;
-            }
+        if (pos.y < piece.minY()) {
+            return true;
         }
 
-        for (piece.rows[start..], start..) |row, i| {
+        for (piece.mask().rows[piece.bottom()..piece.top()], piece.bottom()..) |row, i| {
             const y: usize = @intCast(pos.y + @as(isize, @intCast(i)));
             const shifted_row = if (pos.x < 0)
                 row << @intCast(-pos.x)

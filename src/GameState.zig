@@ -56,8 +56,8 @@ pub fn GameState(comptime BagImpl: type) type {
 
         /// Returns `true` if the given piece at the specified position would
         /// collide with the playfield.
-        pub fn collides(self: Self, piece: Piece, pos: Position) bool {
-            return self.playfield.collides(piece.mask(), pos);
+        pub inline fn collides(self: Self, piece: Piece, pos: Position) bool {
+            return self.playfield.collides(piece, pos);
         }
 
         /// Returns `true` if the current piece is touching the ground.
@@ -104,7 +104,7 @@ pub fn GameState(comptime BagImpl: type) type {
             const steps: u8 = @abs(dx);
             for (0..steps) |i| {
                 self.pos.x += d;
-                if (self.playfield.collides(self.current.mask(), self.pos)) {
+                if (self.playfield.collides(self.current, self.pos)) {
                     self.pos.x -= d;
                     return @intCast(i);
                 }
@@ -117,7 +117,7 @@ pub fn GameState(comptime BagImpl: type) type {
         pub fn drop(self: *Self, dy: u8) u8 {
             for (0..dy) |i| {
                 self.pos.y -= 1;
-                if (self.playfield.collides(self.current.mask(), self.pos)) {
+                if (self.playfield.collides(self.current, self.pos)) {
                     self.pos.y += 1;
                     return @intCast(i);
                 }

@@ -395,7 +395,7 @@ pub fn Player(comptime BagImpl: type) type {
                 });
             }
 
-            if (self.state.playfield.collides(self.state.current.mask(), self.state.pos) or // Block out
+            if (self.state.playfield.collides(self.state.current, self.state.pos) or // Block out
                 (self.settings.use_lockout and self.state.pos.y - self.state.current.bottom() >= 20)) // Lock out
             {
                 self.death_anim_start = self.anim_time;
