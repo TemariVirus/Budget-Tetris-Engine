@@ -6,7 +6,7 @@ const View = nterm.View;
 
 const root = @import("root.zig");
 const ClearInfo = root.attack.ClearInfo;
-const KickTable = root.kicks.KickTable;
+const KickFn = root.kicks.KickFn;
 const Piece = root.pieces.Piece;
 const Settings = root.GameSettings;
 const Stat = root.GameSettings.Stat;
@@ -155,7 +155,7 @@ pub fn Player(comptime BagImpl: type) type {
         pub fn init(
             name: []const u8,
             bag: BagImpl,
-            kicks: *const KickTable,
+            kicks: *const KickFn,
             settings: Settings,
             view: View,
             playSfx: *const SfxFn,

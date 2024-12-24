@@ -3,10 +3,7 @@ const kicks = root.kicks;
 const Position = root.pieces.Position;
 const Piece = root.pieces.Piece;
 const Rotation = kicks.Rotation;
-const srsFn = @import("srs.zig").srsFn;
-
-/// The modified SRS kicks that Tetr.io uses. Introduces some 180 kicks.
-pub const srsTetrio = kicks.makeKickTable(srsTetrioFn);
+const srs = @import("srs.zig").srsRaw;
 
 const no_kicks = [0]Position{};
 
@@ -49,7 +46,10 @@ const double_i_kicks = [1]Position{
     Position{ .x = 0, .y = 0 },
 };
 
-pub fn srsTetrioFn(piece: Piece, rotation: Rotation) []const Position {
+/// The modified SRS kicks that Tetr.io uses. Introduces some 180 kicks.
+pub const srsTetrio = kicks.tabulariseKicks(srsTetrioRaw);
+
+pub fn srsTetrioRaw(piece: Piece, rotation: Rotation) []const Position {
     if (rotation == .half) {
         return &switch (piece.kind) {
             .i => double_i_kicks,
@@ -57,5 +57,6 @@ pub fn srsTetrioFn(piece: Piece, rotation: Rotation) []const Position {
             .t, .s, .z, .j, .l => double_kicks[@intFromEnum(piece.facing)],
         };
     }
-    return srsFn(piece, rotation);
+
+    return srs(piece, rotation);
 }

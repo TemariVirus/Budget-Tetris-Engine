@@ -5,7 +5,7 @@ const assert = std.debug.assert;
 const View = @import("nterm").View;
 
 const root = @import("root.zig");
-const KickTable = root.kicks.KickTable;
+const KickFn = root.kicks.KickFn;
 const Settings = root.GameSettings;
 const SfxFn = root.player.SfxFn;
 
@@ -19,7 +19,7 @@ pub fn Match(comptime BagImpl: type) type {
         pub const Player = root.Player(BagImpl);
 
         pub fn init(
-            comptime kicks: *const KickTable,
+            comptime kicks: KickFn,
             comptime playSfx: SfxFn,
             allocator: Allocator,
             player_count: usize,
