@@ -878,7 +878,7 @@ pub fn Player(comptime BagImpl: type) type {
                         @as(u16, byte) + 66;
                 }
                 const start = @clz(value) / 8;
-                view.printAt(x, y, Colors.WHITE, null, "{s}", .{std.unicode.fmtUtf16le(bytes[start..8])});
+                view.printAt(x, y, Colors.WHITE, null, "{s}", .{std.unicode.fmtUtf16Le(bytes[start..8])});
             }
         }
 

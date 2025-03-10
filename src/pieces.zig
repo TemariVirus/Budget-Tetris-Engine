@@ -162,8 +162,8 @@ pub const Piece = packed struct {
 
     fn makeAttributeTable(comptime T: type, comptime attribute: fn (Piece) T) [28]T {
         var table: [28]T = undefined;
-        for (@typeInfo(PieceKind).Enum.fields) |piece_kind| {
-            for (@typeInfo(Facing).Enum.fields) |facing| {
+        for (@typeInfo(PieceKind).@"enum".fields) |piece_kind| {
+            for (@typeInfo(Facing).@"enum".fields) |facing| {
                 const piece = Piece{
                     .facing = @enumFromInt(facing.value),
                     .kind = @enumFromInt(piece_kind.value),
@@ -176,6 +176,7 @@ pub const Piece = packed struct {
 };
 
 fn maskRaw(piece: Piece) PieceMask {
+    @setEvalBranchQuota(100_000);
     return switch (piece.kind) {
         .i => switch (piece.facing) {
             .up => PieceMask.parse(

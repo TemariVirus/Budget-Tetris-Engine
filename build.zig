@@ -6,21 +6,16 @@ pub fn build(b: *Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const nterm_module = b.dependency("nterm", .{
+    const nterm = b.dependency("nterm", .{
         .target = target,
         .optimize = optimize,
     }).module("nterm");
 
     // Expose the library root
     _ = b.addModule("engine", .{
-        .root_source_file = .{
-            .src_path = .{
-                .owner = b,
-                .sub_path = "src/root.zig",
-            },
-        },
+        .root_source_file = b.path("src/root.zig"),
         .imports = &.{
-            .{ .name = "nterm", .module = nterm_module },
+            .{ .name = "nterm", .module = nterm },
         },
     });
 
@@ -29,12 +24,7 @@ pub fn build(b: *Build) void {
 
 fn buildTests(b: *Build) void {
     const lib_tests = b.addTest(.{
-        .root_source_file = .{
-            .src_path = .{
-                .owner = b,
-                .sub_path = "src/root.zig",
-            },
-        },
+        .root_source_file = b.path("src/root.zig"),
     });
     const run_lib_tests = b.addRunArtifact(lib_tests);
     const test_step = b.step("test", "Run library tests");

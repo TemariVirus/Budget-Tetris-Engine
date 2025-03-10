@@ -1,10 +1,12 @@
 .{
-    .name = "budget-tetris",
+    .name = .budget_tetris,
     .version = "0.0.0",
+    .fingerprint = 0xea0d2b68cafddb74,
+    .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .nterm = .{
-            .url = "https://github.com/TemariVirus/nterm/archive/1aa03dde1ca85a8e9446e12ed8cbb9ef3e5f967b.tar.gz",
-            .hash = "12209b2f1e6623d18a8f6f131074add005570147a4248e7861b209dee6754f4f1d8d",
+            .url = "https://github.com/TemariVirus/nterm/archive/91930993e02e7a2bad1c789a054a3b032cc8403e.tar.gz",
+            .hash = "nterm-0.0.0-zxerdgCgAABJ85fJej4FMH9dcbqitzqmmIDbvj0rg2ie",
         },
     },
     .paths = .{

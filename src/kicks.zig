@@ -32,9 +32,9 @@ pub const Rotation = enum {
     quarter_ccw,
 };
 
-pub const KICK_TABLE_SIZE = @typeInfo(PieceKind).Enum.fields.len *
-    @typeInfo(Facing).Enum.fields.len *
-    @typeInfo(Rotation).Enum.fields.len;
+pub const KICK_TABLE_SIZE = @typeInfo(PieceKind).@"enum".fields.len *
+    @typeInfo(Facing).@"enum".fields.len *
+    @typeInfo(Rotation).@"enum".fields.len;
 
 pub fn makeKickTable(kickFn: KickFn) [KICK_TABLE_SIZE][]const Position {
     @setEvalBranchQuota(10_000);
@@ -59,8 +59,8 @@ pub fn kickTableIndex(piece: Piece, rotation: Rotation) u7 {
     const f: u7 = @intFromEnum(piece.facing);
     const r: u7 = @intFromEnum(rotation);
     return @intCast((p *
-        @typeInfo(Facing).Enum.fields.len + f) *
-        @typeInfo(Rotation).Enum.fields.len + r);
+        @typeInfo(Facing).@"enum".fields.len + f) *
+        @typeInfo(Rotation).@"enum".fields.len + r);
 }
 
 /// Returns a new kick function that uses a table to look up the kicks. May
