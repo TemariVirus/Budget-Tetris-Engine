@@ -5,8 +5,8 @@
     .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .nterm = .{
-            .url = "https://github.com/TemariVirus/nterm/archive/91930993e02e7a2bad1c789a054a3b032cc8403e.tar.gz",
-            .hash = "nterm-0.0.0-zxerdgCgAABJ85fJej4FMH9dcbqitzqmmIDbvj0rg2ie",
+            .url = "git+https://github.com/TemariVirus/nterm#689c61c68297d7504a363ae452f0629aa9f63320",
+            .hash = "nterm-0.0.0-zxerds6gAACoTf98X0Sa9aelHT0VxnyszZ9CeTbfxdWw",
         },
     },
     .paths = .{
