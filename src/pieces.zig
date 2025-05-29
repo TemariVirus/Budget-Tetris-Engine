@@ -11,7 +11,7 @@ const PieceMask = root.bit_masks.PieceMask;
 const Rotation = root.kicks.Rotation;
 
 /// The position of a piece on the playfield.
-pub const Position = struct {
+pub const Position = packed struct {
     x: i8,
     y: i8,
 
