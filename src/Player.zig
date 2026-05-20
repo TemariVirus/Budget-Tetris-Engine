@@ -1,4 +1,5 @@
 const std = @import("std");
+const BoundedArray = @import("bounded_array").BoundedArray;
 
 const nterm = @import("nterm");
 const Colors = nterm.Colors;
@@ -41,7 +42,7 @@ pub const IncomingGarbage = packed struct {
     time: u44,
 };
 // Use a bounded array to avoid dynamic allocation
-pub const GarbageQueue = std.BoundedArray(IncomingGarbage, 25);
+pub const GarbageQueue = BoundedArray(IncomingGarbage, 25);
 
 pub fn Player(comptime BagImpl: type) type {
     return struct {
@@ -124,6 +125,7 @@ pub fn Player(comptime BagImpl: type) type {
         playfield_colors: ColorArray = ColorArray{},
         garbage_queue: GarbageQueue = GarbageQueue{},
         settings: Settings,
+        random: root.bags.SplitMix64,
 
         already_held: bool = false,
         last_kick: i8 = -1,
@@ -157,6 +159,7 @@ pub fn Player(comptime BagImpl: type) type {
             bag: BagImpl,
             kicks: *const KickFn,
             settings: Settings,
+            seed: u64,
             view: View,
             playSfx: *const SfxFn,
         ) Self {
@@ -164,6 +167,7 @@ pub fn Player(comptime BagImpl: type) type {
                 .name = name,
                 .state = GameState.init(bag, kicks),
                 .settings = settings,
+                .random = .init(seed),
                 .view = view,
                 .playSfx = playSfx,
             };
@@ -479,7 +483,7 @@ pub fn Player(comptime BagImpl: type) type {
             switch (self.settings.target_mode) {
                 .none => {},
                 .random => {
-                    const index = std.crypto.random.uintLessThan(usize, alive_players.count());
+                    const index = self.random.random().uintLessThan(usize, alive_players.count());
                     alive_players.getAt(index).queueGarbage(
                         null,
                         remaining_attack,
@@ -492,7 +496,7 @@ pub fn Player(comptime BagImpl: type) type {
                         break :blk;
                     }
 
-                    const index = std.crypto.random.uintLessThan(usize, alive_count);
+                    const index = self.random.random().uintLessThan(usize, alive_count);
                     alive_players.getAtButSelf(index, self_index).queueGarbage(
                         null,
                         remaining_attack,
@@ -591,7 +595,7 @@ pub fn Player(comptime BagImpl: type) type {
 
         /// Queues garbage to be added to the playfield.
         pub fn queueGarbage(self: *Self, hole: ?u4, lines: u16, time: u64) void {
-            const resolved_hole = hole orelse std.crypto.random.uintLessThan(u4, 10);
+            const resolved_hole = hole orelse self.random.random().uintLessThan(u4, 10);
             if (self.garbage_queue.len < self.garbage_queue.capacity()) {
                 self.garbage_queue.appendAssumeCapacity(.{
                     .hole = resolved_hole,
@@ -714,7 +718,7 @@ pub fn Player(comptime BagImpl: type) type {
             if (self.lines_sent == 0.0) {
                 return 0.0;
             }
-            return @as(f32, @floatFromInt(self.lines_sent)) / @as(f32, @floatFromInt(self.time)) * std.time.ns_per_min;
+            return @as(f32, @floatFromInt(self.lines_sent)) / @as(f32, @floatFromInt(self.time)) * @as(f32, @floatFromInt(std.time.ns_per_min));
         }
 
         /// Returns the current Attack Per Piece (APP)
@@ -878,7 +882,7 @@ pub fn Player(comptime BagImpl: type) type {
                         @as(u16, byte) + 66;
                 }
                 const start = @clz(value) / 8;
-                view.printAt(x, y, Colors.WHITE, null, "{s}", .{std.unicode.fmtUtf16Le(bytes[start..8])});
+                view.printAt(x, y, Colors.WHITE, null, "{f}", .{std.unicode.fmtUtf16Le(bytes[start..8])});
             }
         }
 
@@ -1004,7 +1008,7 @@ pub fn Player(comptime BagImpl: type) type {
                 .received => view.printAt(0, 0, Colors.WHITE, null, "REC: {d}", .{self.lines_received}),
                 .score => view.printAt(0, 0, Colors.WHITE, null, "SCORE: {d}", .{self.score}),
                 .sent => view.printAt(0, 0, Colors.WHITE, null, "SENT: {d}", .{self.lines_sent}),
-                .time => view.printAt(0, 0, Colors.WHITE, null, "TIME: {}", .{std.fmt.fmtDuration(self.time)}),
+                .time => view.printAt(0, 0, Colors.WHITE, null, "TIME: {f}", .{std.Io.Duration.fromNanoseconds(self.time)}),
                 .vs_score => view.printAt(0, 0, Colors.WHITE, null, "VS: {d:.4}", .{self.vsScore()}),
             }
         }

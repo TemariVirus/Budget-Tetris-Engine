@@ -5,8 +5,12 @@
     .minimum_zig_version = "0.14.0",
     .dependencies = .{
         .nterm = .{
-            .url = "git+https://github.com/TemariVirus/nterm#689c61c68297d7504a363ae452f0629aa9f63320",
-            .hash = "nterm-0.0.0-zxerds6gAACoTf98X0Sa9aelHT0VxnyszZ9CeTbfxdWw",
+            .url = "git+https://github.com/TemariVirus/nterm#c607f6f0aa1d3a9b0409f2f95b20dd080b01605b",
+            .hash = "nterm-0.0.0-zxerdv2qAABRsYCQJLnZXuFbC1qtFrPZiTHRdHINtw7o",
+        },
+        .bounded_array = .{
+            .url = "git+https://github.com/jedisct1/zig-bounded-array#3b0c1e0c96ec5e7f1922d278105e43f55d9696ed",
+            .hash = "bounded_array-0.1.0-VF2RKrtNAABxXA4CBdotyW_0kdepIDj1OLtjnuDylwW0",
         },
     },
     .paths = .{

@@ -33,13 +33,13 @@ pub fn clearTimes(clear_delay: u32) [5]u64 {
 }
 
 pub fn clearAnimation(time: u64, clear_delay: u32, view: View, y: u16) Animation {
-    return .{
-        .time = time,
-        .frames = &CLEAR_FRAMES,
-        .frame_times = &clearTimes(clear_delay),
-        .size = .{ .width = CLEAR_WIDTH, .height = CLEAR_HEIGHT },
-        .view = view.sub(12, @intCast(22 - y), CLEAR_WIDTH, CLEAR_HEIGHT),
-    };
+    return .init(
+        time,
+        &CLEAR_FRAMES,
+        &clearTimes(clear_delay),
+        .{ .width = CLEAR_WIDTH, .height = CLEAR_HEIGHT },
+        view.sub(12, @intCast(22 - y), CLEAR_WIDTH, CLEAR_HEIGHT),
+    );
 }
 
 pub const DEATH_WIDTH = 20;
@@ -75,11 +75,11 @@ pub const DEATH_TIMES = blk: {
 };
 
 pub fn deathAnimation(time: u64, view: View) Animation {
-    return .{
-        .time = time,
-        .frames = &DEATH_FRAMES,
-        .frame_times = &DEATH_TIMES,
-        .size = .{ .width = DEATH_WIDTH, .height = DEATH_HEIGHT },
-        .view = view.sub(0, 0, DEATH_WIDTH, DEATH_HEIGHT),
-    };
+    return .init(
+        time,
+        &DEATH_FRAMES,
+        &DEATH_TIMES,
+        .{ .width = DEATH_WIDTH, .height = DEATH_HEIGHT },
+        view.sub(0, 0, DEATH_WIDTH, DEATH_HEIGHT),
+    );
 }
